@@ -29,7 +29,7 @@ class PostgreSQLOnlineStore(OnlineStore):
     _conn: Optional[psycopg2._psycopg.connection] = None
 
     def _get_conn(self, config: RepoConfig):
-        if not self._conn:
+        if not self._conn or self._conn.cursor().closed:
             assert config.online_store.type == "postgres"
             self._conn = _get_conn(config.online_store)
         return self._conn
@@ -90,6 +90,7 @@ class PostgreSQLOnlineStore(OnlineStore):
                 )
                 if progress:
                     progress(len(cur_batch))
+            cur.close()
 
     @log_exceptions_and_usage(online_store="postgres")
     def online_read(
